@@ -2,7 +2,7 @@ import unittest
 from graphical_models import PAG, DAG
 import graphical_models.arrow_head_types as Mark
 from itertools import combinations
-
+import numpy as np
 
 class TestPAG(unittest.TestCase):
     @classmethod
@@ -472,6 +472,77 @@ class TestPAG(unittest.TestCase):
                         dag.dsep(i, j, set(cond_set)),
                         pag.is_m_separated(i, j, set(cond_set))
                     )
+
+    def test_get_adj_mat(self):
+        # create PAG
+        node_set = set(range(10))
+        pag = PAG(node_set)
+        pag.add_edge(3, 4, Mark.Circle, Mark.Circle)
+        pag.add_edge(4, 5, Mark.Circle, Mark.Directed)
+        pag.add_edge(4, 6, Mark.Circle, Mark.Circle)
+        pag.add_edge(5, 0, Mark.Circle, Mark.Circle)
+        pag.add_edge(0, 8, Mark.Circle, Mark.Circle)
+        pag.add_edge(8, 1, Mark.Circle, Mark.Directed)
+        pag.add_edge(1, 2, Mark.Circle, Mark.Circle)
+        pag.add_edge(2, 9, Mark.Circle, Mark.Circle)
+        pag.add_edge(7, 5, Mark.Circle, Mark.Circle)
+        pag.add_edge(7, 8, Mark.Circle, Mark.Circle)
+        pag.add_edge(5, 8, Mark.Circle, Mark.Circle)
+
+        # convert PAG to adjacency matrix
+        adj_mat = pag.get_adj_mat()
+
+        # total of 11 edges
+        self.assertEqual(np.sum(adj_mat > 0), 11*2)
+
+        # check result
+        arrow_type_map = dict()
+        arrow_type_map[None] = 0
+        arrow_type_map[Mark.Circle] = 1
+        arrow_type_map[Mark.Directed] = 2
+        arrow_type_map[Mark.Tail] = 3
+
+        for node1 in pag.nodes_set:
+            for node2 in pag.nodes_set:
+                edge_mark = pag.get_edge_mark(node1, node2)
+                self.assertEqual(adj_mat[node1, node2] , arrow_type_map[edge_mark])
+
+
+    def test_init_from_adj_mat(self):
+        # create PAG
+        node_set = set(range(10))
+        pag = PAG(node_set)
+        pag.add_edge(3, 4, Mark.Circle, Mark.Circle)
+        pag.add_edge(4, 5, Mark.Circle, Mark.Directed)
+        pag.add_edge(4, 6, Mark.Circle, Mark.Circle)
+        pag.add_edge(5, 0, Mark.Circle, Mark.Circle)
+        pag.add_edge(0, 8, Mark.Circle, Mark.Circle)
+        pag.add_edge(8, 1, Mark.Circle, Mark.Directed)
+        pag.add_edge(1, 2, Mark.Circle, Mark.Circle)
+        pag.add_edge(2, 9, Mark.Circle, Mark.Circle)
+        pag.add_edge(7, 5, Mark.Circle, Mark.Circle)
+        pag.add_edge(7, 8, Mark.Circle, Mark.Circle)
+        pag.add_edge(5, 8, Mark.Circle, Mark.Circle)
+
+        # convert PAG to adjacency matrix
+        adj_mat = pag.get_adj_mat()
+
+        # create PAG from adjacency matrix
+        new_pag = PAG(node_set)
+        new_pag.init_from_adj_mat(adj_mat)
+        new_adj_mat = new_pag.get_adj_mat()
+
+        # check result
+        arrow_type_map = dict()
+        arrow_type_map[None] = 0
+        arrow_type_map[Mark.Circle] = 1
+        arrow_type_map[Mark.Directed] = 2
+        arrow_type_map[Mark.Tail] = 3
+
+        for node1 in pag.nodes_set:
+            for node2 in pag.nodes_set:
+                edge_mark = pag.get_edge_mark(node1, node2)
+                self.assertEqual(new_adj_mat[node1, node2] , arrow_type_map[edge_mark])
 
 
 if __name__ == '__main__':

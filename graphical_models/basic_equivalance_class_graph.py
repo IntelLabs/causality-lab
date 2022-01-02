@@ -229,7 +229,7 @@ class MixedGraph:
 
         return connected_sets
 
-    def get_adjacency_graph(self, en_nodes=None) -> UndirectedGraph:
+    def get_skeleton_graph(self, en_nodes=None) -> UndirectedGraph:
         if en_nodes is None:
             en_nodes = self.nodes_set
 
@@ -287,9 +287,9 @@ class MixedGraph:
         self._graph[node_i][edge_mark_at_i].add(node_j)
         self._graph[node_j][edge_mark_at_j].add(node_i)
 
-    def get_adj_mat(self):
+    def get_skeleton_mat(self):
         """
-        Return the adjacency matrix, a square numpy matrix format
+        Return the adjacency matrix of the graph skeleton, a square numpy matrix format.
         :return:
         """
         num_nodes = len(self.nodes_set)

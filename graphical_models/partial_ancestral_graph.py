@@ -3,7 +3,7 @@ from .basic_equivalance_class_graph import MixedGraph
 from .partially_dag import PDAG
 from . import arrow_head_types as Mark
 from itertools import combinations
-
+import numpy as np
 
 class PAG(MixedGraph):
     """
@@ -26,6 +26,71 @@ class PAG(MixedGraph):
             9: self.orient_by_rule_9,  # required for tail-completeness
             10: self.orient_by_rule_10,  # required for tail-completeness
         }
+
+    def init_from_adj_mat(self, adj_mat: np.ndarray, nodes_order: list = None):
+        """
+        creates a PAG from a given adjacency matrix.
+        :param adj_mat: a square numpy matrix.
+        an edge a --* b has the following coding:
+        adj_mat[a,b] = 0  implies   a   b    (no edge)
+        adj_mat[a,b] = 1  implies   a --o b  (Circle marker on node b)
+        adj_mat[a,b] = 2  implies   a --> b  (Arrowhead marker on node b)
+        adj_mat[a,b] = 3  implies   a --- b  (Tail marker on node b)
+
+        :param nodes_order: nodes ids. if set to None (default) then using sorted(nodes_set) as nodes ids.
+        :return:
+        """
+        assert adj_mat.ndim == 2
+        assert adj_mat.shape[0] == adj_mat.shape[1]
+        assert np.sum(adj_mat < 0) == 0 and np.sum(adj_mat > 3) == 0
+
+        num_vars = adj_mat.shape[0]
+        if nodes_order is not None:
+            assert isinstance(nodes_order, list)
+            assert num_vars == len(nodes_order)
+        else:
+            nodes_order = sorted(self.nodes_set)
+
+        self.create_empty_graph()  # delete all pre-existing edges
+
+        # conversion mapping
+        arrow_type_map = dict()
+        arrow_type_map[0] = 0
+        arrow_type_map[1] = Mark.Circle
+        arrow_type_map[2] = Mark.Directed
+        arrow_type_map[3] = Mark.Tail
+
+        for node_i in range(num_vars):
+            for node_j in range(num_vars):
+                if adj_mat[node_i, node_j] > 0:
+                    arrow_type = arrow_type_map[adj_mat[node_i, node_j]]  # edge mark node_i ---[*] node_j
+                    self._graph[nodes_order[node_j]][arrow_type].add(nodes_order[node_i])  # add to node_j edge mark [*]
+
+    def get_adj_mat(self):
+        """
+        converts a PAG to an adjacency matrix with the following coding:
+         0: No edge
+         1: Circle
+         2: Arrowhead
+         3: Tail
+        :return: a square numpy matrix format.
+        """
+        num_vars = len(self.nodes_set)
+        adj_mat = np.zeros((num_vars, num_vars), dtype=int)
+        node_index_map = {node: i for i, node in enumerate(sorted(self.nodes_set))}
+
+        # convert adjacency to PAG
+        arrow_type_map = dict()
+        arrow_type_map[Mark.Circle] = 1
+        arrow_type_map[Mark.Directed] = 2
+        arrow_type_map[Mark.Tail] = 3
+
+        for node in self._graph:
+            for edge_mark in self.edge_mark_types:
+                for node_p in self._graph[node][edge_mark]:
+                    adj_mat[node_index_map[node_p]][node_index_map[node]] = arrow_type_map[edge_mark]
+
+        return adj_mat
 
     def fan_in(self, target_node):
         """
@@ -446,7 +511,7 @@ class PAG(MixedGraph):
             anterior_set.update(self.find_possible_ancestors({node_z}))
 
         # 2. In an empty undirected graph connect every pair of nodes that are collider-connected
-        moral_graph = self.get_adjacency_graph(anterior_set)  # 2.a. initialize a moral graph using the graph skeleton
+        moral_graph = self.get_skeleton_graph(anterior_set)  # 2.a. initialize a moral graph using the graph skeleton
         components_list = self.find_definite_c_components(anterior_set)  # 2.b. find dc-components
         for dc_comp in components_list:  # 2.c. augment each dc-component by adding nodes that have incoming edges
             augmented_nodes = set()
