@@ -114,7 +114,7 @@ class LearnStructFCI(LearnStructBase):
         # If this path is "legal" then "node_2" is in the possible-d-sep set and added to the PDS-tree
 
         # create an adjacency matrix (ignore edge-marks)
-        adj_graph = self.graph.get_adjacency_graph()
+        adj_graph = self.graph.get_skeleton_graph()
 
         # initialize "first nodes" and "second nodes" lists
         neighbors = adj_graph.get_neighbors(node_edge)

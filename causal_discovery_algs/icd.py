@@ -249,7 +249,7 @@ class LearnStructICD(LearnStructBase):
         pds_tree = PDSTree(node_root)  # initialize
 
         # create an adjacency matrix (ignore edge-marks)
-        adj_graph = self.graph.get_adjacency_graph()
+        adj_graph = self.graph.get_skeleton_graph()
 
         # initialize "first nodes" and "second nodes" lists
         neighbors = adj_graph.get_neighbors(node_root)
