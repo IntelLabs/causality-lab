@@ -1,6 +1,6 @@
 # Causality Lab
 
-This repository contains research code of novel causal discovery algorithms developed at Intel Labs, common baseline algorithms, 
+This repository contains research code of novel causal discovery algorithms developed at Intel Labs, as well as other common algorithms, 
 and classes for developing and examining new algorithms for causal structure learning.
 
 ## Table of Contents
@@ -18,13 +18,13 @@ Included algorithms learn causal structures given observed data. They assume cau
 There are two families of algorithms:
 
 1. **Causal discovery under causal sufficiency and bayesian network structure learning**
-   1. Baseline: **PC** (Spirtes et al., 2000)
-   2. Baseline: **RAI** ([Yehezkel and Lerner, 2009](https://www.jmlr.org/papers/volume10/yehezkel09a/yehezkel09a.pdf)). This algorithm is used for learning the structure in the B2N algorithm ([Rohekar et al., NeurIPS 2018b](https://arxiv.org/pdf/1806.09141.pdf)) 
-   3. **B-RAI** uncertainty estimation ([Rohekar et al., NeurIPS 2018a](https://arxiv.org/abs/1809.04828)). This algorithm is used for learning the structure of BRAINet ([Rohekar et al., NeurIPS 2019](https://arxiv.org/abs/1905.13195))
+   1. PC algorithm (Spirtes et al., 2000)
+   2. RAI algorithm, Recursive Autonomy Identification ([Yehezkel and Lerner, 2009](https://www.jmlr.org/papers/volume10/yehezkel09a/yehezkel09a.pdf)). This algorithm is used for learning the structure in the B2N algorithm ([Rohekar et al., NeurIPS 2018b](https://arxiv.org/pdf/1806.09141.pdf)) 
+   3. B-RAI algorithm, Bootstrap/Bayesian-RAI for uncertainty estimation ([Rohekar et al., NeurIPS 2018a](https://arxiv.org/abs/1809.04828)). This algorithm is used for learning the structure of BRAINet ([Rohekar et al., NeurIPS 2019](https://arxiv.org/abs/1905.13195))
 
 2. **Causal discovery in the presence of latent confounders and selection bias**
-   1. Baseline: **FCI** (Spirtes et at., 2000)
-   2. **ICD** ([Rohekar et al., NeurIPS 2021](https://arxiv.org/abs/2111.04095))
+   1. FCI algorithm, Fast Causal Inference (Spirtes et at., 2000)
+   2. ICD algorithm, Iterative Causal Discovery ([Rohekar et al., NeurIPS 2021](https://arxiv.org/abs/2111.04095))
 
 ![Example ICD](imgs/ExampleAnimationICD.gif)
 
