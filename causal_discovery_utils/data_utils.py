@@ -10,11 +10,12 @@ def get_var_size(data):
     return node_size
 
 
-def calc_stats(data, var_size):
+def calc_stats(data, var_size, weights=None):
     """
     Calculate the counts of instances in the data
-    :param data:
-    :param var_size:
+    :param data: a dataset of categorical features
+    :param var_size: a vector defining the cardinalities of the features
+    :param weights: a vector of non-negative weights for data samples.
     :return:
     """
     sz_cum_prod = [1]
@@ -25,7 +26,8 @@ def calc_stats(data, var_size):
 
     data_idx = np.dot(data, sz_cum_prod)
     try:
-        hist_count, _ = np.histogram(data_idx, np.arange(sz_prod + 1))
+        # hist_count, _ = np.histogram(data_idx, np.arange(sz_prod + 1), weights=weights)
+        hist_count = np.bincount(data_idx, minlength=sz_prod, weights=weights)
     except MemoryError as error:
         print('Out of memory')
         return None

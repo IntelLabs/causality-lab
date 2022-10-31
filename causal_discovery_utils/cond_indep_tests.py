@@ -136,12 +136,14 @@ class DSep:
 
 class StatCondIndep:
     def __init__(self,
-                 dataset, threshold, database_type,
+                 dataset, threshold, database_type, weights=None,
                  retained_edges=None, count_tests=False, use_cache=False, verbose=False):
         """
         Base class for statistical conditional independence tests
         :param dataset:
         :param threshold:
+        :param database_type: data type (e,g., int)
+        :param weights: an array of values indicating weight of each individual data sample
         :param retained_edges: an undirected graph containing edges between nodes that are dependent (not to be tested)
         :param count_tests: if True, count the number of CI test queries (default: False). Mainly for debug
         """
@@ -163,6 +165,7 @@ class StatCondIndep:
         self.num_vars = num_vars
         self.node_size = node_size
         self.threshold = threshold
+        self.weights = weights
 
         # Initialize counter of CI tests per conditioning set size
         self.count_tests = count_tests
@@ -216,8 +219,11 @@ class StatCondIndep:
 
 
 class CondIndepParCorr(StatCondIndep):
-    def __init__(self, threshold, dataset, retained_edges=None, count_tests=False, use_cache=False):
-        super().__init__(dataset, threshold, np.float, retained_edges, count_tests, use_cache)
+    def __init__(self, threshold, dataset, weights=None, retained_edges=None, count_tests=False, use_cache=False):
+        if weights is not None:
+            raise Exception('weighted Partial-correlation is not supported. Please avoid using weights.')
+        super().__init__(dataset, threshold, database_type=np.float, weights=weights, retained_edges=retained_edges,
+                         count_tests=count_tests, use_cache=use_cache)
         self.correlation_matrix = np.corrcoef(self.data.T)
         self.data = None  # no need to store the data, as we have the correlation matrix
 
@@ -249,8 +255,17 @@ class CondIndepParCorr(StatCondIndep):
 
 
 class CondIndepCMI(StatCondIndep):
-    def __init__(self, dataset, threshold, retained_edges=None, count_tests=False, use_cache=False):
-        super().__init__(dataset, threshold, np.int, retained_edges, count_tests, use_cache)
+    def __init__(self, dataset, threshold, weights=None, retained_edges=None, count_tests=False, use_cache=False):
+        self.weight_data_type = np.float
+        if weights is not None:
+            weights = np.array(weights, dtype=self.weight_data_type)
+            # if np.min(weights) < 0:
+            #     raise Exception('Negative sample weights are not allowed')
+            # if np.abs(np.sum(weights) - 1.0) > np.finfo(self.weight_data_type).eps:
+            #     raise Exception('Sample weights do not sum to 1.0')
+            # weights *= dataset.shape[0]
+        super().__init__(dataset, threshold, database_type=np.int, weights=weights, retained_edges=retained_edges,
+                         count_tests=count_tests, use_cache=use_cache)
 
     def cond_indep(self, x, y, zz):
         res = super().cond_indep(x, y, zz)
@@ -266,13 +281,35 @@ class CondIndepCMI(StatCondIndep):
         """
         all_var_idx = (x, y) + zz
         dd = self.data[:, all_var_idx]
-        sz = [self.node_size[node_i] for node_i in all_var_idx]
+        var_size = [self.node_size[node_i] for node_i in all_var_idx]
 
-        hist_count = calc_stats(data=dd, var_size=sz)
+        hist_count = calc_stats(data=dd, var_size=var_size, weights=self.weights)
         if hist_count is None:  # memory error
             return 0
-        hist_count = np.reshape(hist_count, [sz[0], sz[1], -1], order='F')  # 3rd axis is the states of condition set
+        hist_count = np.reshape(hist_count, [var_size[0], var_size[1], -1],
+                                order='F')  # 3rd axis is the states of condition set
+        cmi = self._calc_cmi_from_counts(hist_count)
+        #
+        # xsize, ysize, csize = hist_count.shape
+        #
+        # # Calculate conditional mutual information
+        # cmi = 0
+        # for zi in range(csize):
+        #     cnt = hist_count[:, :, zi]
+        #     cnum = cnt.sum()
+        #     for node_i in range(self.node_size[x]):
+        #         for node_j in range(self.node_size[y]):
+        #             if cnt[node_i, node_j] > 0:
+        #                 cnt_val = cnt[node_i, node_j]
+        #                 cx = cnt[:, node_j].sum()  # sum over y for specific x-state
+        #                 cy = cnt[node_i, :].sum()  # sum over x for specific y-state
+        #
+        #                 lg = math.log(cnt_val*cnum / (cx * cy))
+        #                 cmi_ = lg*cnt_val/self.num_records
+        #                 cmi += cmi_
+        return cmi
 
+    def _calc_cmi_from_counts(self, hist_count):
         xsize, ysize, csize = hist_count.shape
 
         # Calculate conditional mutual information
@@ -280,8 +317,8 @@ class CondIndepCMI(StatCondIndep):
         for zi in range(csize):
             cnt = hist_count[:, :, zi]
             cnum = cnt.sum()
-            for node_i in range(self.node_size[x]):
-                for node_j in range(self.node_size[y]):
+            for node_i in range(xsize):
+                for node_j in range(ysize):
                     if cnt[node_i, node_j] > 0:
                         cnt_val = cnt[node_i, node_j]
                         cx = cnt[:, node_j].sum()  # sum over y for specific x-state
