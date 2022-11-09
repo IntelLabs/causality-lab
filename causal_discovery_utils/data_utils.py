@@ -34,7 +34,7 @@ def calc_stats(data, var_size, weights=None):
     return hist_count
 
 
-def unroll_temporal_data(data_full, observed_nodes_list, window_len, t_step=1):
+def unroll_temporal_data(data_full, observed_nodes_list, window_len, t_step=1, reverse_temporal_order=False):
     """
     Unroll temporally sorted data samples into the defined time window. For example, if the time window is 2, then
     each two consecutive data samples are concatenated into a single sample. The new samples are sorted temporally.
@@ -42,10 +42,13 @@ def unroll_temporal_data(data_full, observed_nodes_list, window_len, t_step=1):
     :param observed_nodes_list: indexes of columns in the original data that correspond to 'observed' variables.
     :param window_len: Length (number of time-stamps) of the unrolling window (current-time + window_len-1 past-steps).
     :param t_step: Nuber of time-step skips between unrolled samples (default is 1).
+    :param reverse_temporal_order: if True, then indexes [0..n] represent the latest instances and
+        higher indexes represent past instances. If False, [0..n] represent indexes of the earliest instances and
+        higher indexes represent future instances.
     :return: An unrolled temporally sorted data samples.
     """
-    n_samples = data_full.shape[0]
-    n_contemporaneous_nodes = data_full.shape[1]
+    n_samples = data_full.shape[0]  # number of data samples
+    n_contemporaneous_nodes = data_full.shape[1]  # number of contemporaneous (jointly measured) variables
     num_nodes_unrolled = window_len * n_contemporaneous_nodes  # number of variables in a single unrolled sample
 
     # calculate the starting time index for each unrolled sample
@@ -59,5 +62,17 @@ def unroll_temporal_data(data_full, observed_nodes_list, window_len, t_step=1):
     # indexes of variables in the unrolled data
     _nodes_sets_list_full = np.reshape(range(num_nodes_unrolled), (window_len, n_contemporaneous_nodes))
     _nodes_sets_list = [_nodes_sets_list_full[i, observed_nodes_list].tolist() for i in range(window_len)]  # observed
+
+    if reverse_temporal_order:
+        # reverse time order such that indexes [0..n_contemporaneous_nodes-1] represent the latest instances,
+        # whereas larger indexes represent earlier instances.
+        data_full_unrolled_reversed = np.zeros_like(data_full_unrolled)
+        for idxes, idxes_rev in zip(_nodes_sets_list, reversed(_nodes_sets_list)):
+            data_full_unrolled_reversed[:, idxes] = data_full_unrolled[:, idxes_rev]
+        data_full_unrolled = data_full_unrolled_reversed
+    else:
+        # increasing time order such that indexes [0..n_contemporaneous_nodes-1] represent the earliest instances,
+        # whereas larger indexes represent future instances.
+        pass
 
     return data_full_unrolled, _nodes_sets_list_full, _nodes_sets_list
