@@ -124,3 +124,38 @@ class CircleLayout(BaseLayout):
             self.pos[node][1] = center[1] + yrad * sin(angle)
 
         return self.pos
+
+
+class ColumnLayout(BaseLayout):
+    def __init__(self, graph, win_left_right, win_top_bottom, group_sort=None):
+        super().__init__(graph, win_left_right, win_top_bottom, group_sort)
+
+    def calc_layout(self):
+        if self.group_sort is None:
+            nodes_order = list(self.graph.nodes_set)
+            group_sort = [nodes_order]
+        else:  # self.group_sort is not None
+            group_sort = self.group_sort
+
+        # find the size of the largest group of nodes
+        max_group_len = 0
+        for group in group_sort:
+            if len(group) > max_group_len:
+                max_group_len = len(group)
+
+        # calculate positions. First group is left-most
+        n_groups = len(group_sort)
+        y_offset = self.bottom
+        if n_groups > 1:
+            x_step = (self.right - self.left) / (n_groups-1)
+            x_offset = self.left
+        else:
+            x_step = 0
+            x_offset = (self.right + self.left) / 2.
+        y_step = (self.top - self.bottom) / (max_group_len - 1)
+        for i_group, group in enumerate(group_sort):
+            for i_node, node in enumerate(group):
+                self.pos[node][0] = x_step * i_group + x_offset
+                self.pos[node][1] = y_step * i_node + y_offset
+
+        return self.pos
