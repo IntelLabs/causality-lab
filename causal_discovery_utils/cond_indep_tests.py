@@ -5,7 +5,7 @@ import numpy as np
 from causal_discovery_utils.data_utils import calc_stats
 from causal_discovery_utils.data_utils import get_var_size
 from graphical_models import DAG, UndirectedGraph
-from scipy.stats import norm
+from scipy import stats
 
 
 class CacheCI:
@@ -224,7 +224,7 @@ class CondIndepParCorr(StatCondIndep):
             raise Exception('weighted Partial-correlation is not supported. Please avoid using weights.')
         super().__init__(dataset, threshold, database_type=np.float, weights=weights, retained_edges=retained_edges,
                          count_tests=count_tests, use_cache=use_cache)
-        self.correlation_matrix = np.corrcoef(self.data.T)
+        self.correlation_matrix = np.corrcoef(self.data, rowvar=False)  # np.corrcoef(self.data.T)
         self.data = None  # no need to store the data, as we have the correlation matrix
 
     def calc_statistic(self, x, y, zz):
@@ -240,17 +240,20 @@ class CondIndepParCorr(StatCondIndep):
         else:  # zz contains 2 or more variables
             all_var_idx = (x, y) + zz
             corr_coef_subset = corr_coef[np.ix_(all_var_idx, all_var_idx)]
-            inv_corr_coef = -np.linalg.pinv(corr_coef_subset)  # consider using pinv instead of inv
+            inv_corr_coef = -np.linalg.inv(corr_coef_subset)  # consider using pinv instead of inv
             par_corr = inv_corr_coef[0, 1] / np.sqrt(abs(inv_corr_coef[0, 0]*inv_corr_coef[1, 1]))
 
-        z = np.log1p(2*par_corr / (1-par_corr))  # log( (1+par_corr)/(1-par_corr) )
+        degrees_of_freedom = self.num_records - (len(zz) + 2)  # degrees of freedom to be used to calculate p-value
 
-        val_for_cdf = abs(
-            np.sqrt(self.num_records - len(zz) - 3) *
-            0.5 * z
-        )
+        # # Calculate based on the t-distribution
+        # t_statistic = par_corr * np.sqrt(degrees_of_freedom / (1.-par_corr*par_corr))  # approximately t-distributed
+        # statistic = 2 * stats.t.sf(abs(t_statistic), degrees_of_freedom)  # p-value
 
-        statistic = 2*(1-norm.cdf(val_for_cdf))
+        # Estimation based on Fisher z-transform
+        z = 0.5 * np.log1p(2*par_corr / (1-par_corr))  # Fisher Z-transform, 0.5*log( (1+par_corr)/(1-par_corr) )
+        val_for_cdf = abs(np.sqrt(degrees_of_freedom - 1) * z)  # approximately normally distributed
+        statistic = 2 * (1-stats.norm.cdf(val_for_cdf))  # p-value
+
         return statistic
 
 
