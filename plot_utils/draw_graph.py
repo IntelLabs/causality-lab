@@ -176,6 +176,11 @@ def draw_graph(graph, latent_nodes=None, selection_nodes=None, bkcolor='white', 
         selection_nodes = set()
     if latent_nodes is None:
         latent_nodes = set()
+    if node_labels is None:
+        node_labels = {}
+    for node in graph.nodes_set:
+        if node not in node_labels:
+            node_labels[node] = node
 
     bottom = 0
     # top = 1
