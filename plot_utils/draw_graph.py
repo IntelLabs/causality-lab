@@ -156,7 +156,7 @@ def draw_node(axes, pos, node_radius,
 
 
 def draw_graph(graph, latent_nodes=None, selection_nodes=None, bkcolor='white', fgcolor='black', line_color='auto',
-               layout_type=None):
+               layout_type=None, node_labels=None, top=1, right=1):
     """
     Draw a graph. Currently supported graph types are DAG and PAG. Matplotlib is used as a backend.
     :param graph: the graph to be plotted
@@ -168,6 +168,7 @@ def draw_graph(graph, latent_nodes=None, selection_nodes=None, bkcolor='white', 
     :param fgcolor: foreground color of the node
     :param line_color: color of the node contour and text
     :param layout_type: type of node position layout: 'circular' or 'force' (default; force-directed algorithm)
+    :param node_labels: a mapping from node ID's to desired labels in the rendered graph.
     :return:
     """
     assert isinstance(graph, (DAG, PAG))
@@ -175,11 +176,16 @@ def draw_graph(graph, latent_nodes=None, selection_nodes=None, bkcolor='white', 
         selection_nodes = set()
     if latent_nodes is None:
         latent_nodes = set()
+    if node_labels is None:
+        node_labels = {}
+    for node in graph.nodes_set:
+        if node not in node_labels:
+            node_labels[node] = node
 
     bottom = 0
-    top = 1
+    # top = 1
     left = 0
-    right = 1
+    # right = 1
     node_radius = 0.04
     width = right - left
     height = top - bottom
@@ -221,7 +227,7 @@ def draw_graph(graph, latent_nodes=None, selection_nodes=None, bkcolor='white', 
             contour = 'circle'
             fg = fgcolor
             bk = bkcolor
-        draw_node(ax, nodes_pos[node], node_radius=node_radius, node_name=str(node), contour=contour,
+        draw_node(ax, nodes_pos[node], node_radius=node_radius, node_name=node_labels[node], contour=contour,
                   line_color=fgcolor, fill_color=bk, text_color=fg)
 
     if isinstance(graph, PAG):
