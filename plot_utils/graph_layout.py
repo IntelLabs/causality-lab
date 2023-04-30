@@ -60,9 +60,9 @@ class ForceDirectedLayout(BaseLayout):
         init_pos = init_layout.calc_layout()
 
     def _calc_repulsive_forces(self):
-        repulse = {node: np.zeros(2, dtype=np.float) for node in self.graph.nodes_set}  # dictionary
+        repulse = {node: np.zeros(2, dtype=float) for node in self.graph.nodes_set}  # dictionary
         for node_i in self.graph.nodes_set:
-            repulse[node_i] = np.zeros(2, dtype=np.float)
+            repulse[node_i] = np.zeros(2, dtype=float)
             for node_j in self.graph.nodes_set-{node_i}:
                 dv = self.pos[node_i] - self.pos[node_j]
                 dist = np.sqrt(dv[0]*dv[0] + dv[1]*dv[1])  # Euclidean distance
@@ -71,7 +71,7 @@ class ForceDirectedLayout(BaseLayout):
         return repulse
 
     def _calc_attracting_forces(self):
-        attract = {node: np.zeros(2, dtype=np.float) for node in self.graph.nodes_set}  # dictionary
+        attract = {node: np.zeros(2, dtype=float) for node in self.graph.nodes_set}  # dictionary
         for node_i in self.graph.nodes_set:
             for node_j in self.graph.find_adjacent_nodes(node_i):  # loop through neighbors
                 dv = self.pos[node_i] - self.pos[node_j]

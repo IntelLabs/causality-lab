@@ -230,7 +230,7 @@ class CondIndepParCorr(StatCondIndep):
                  num_records=None, num_vars=None):
         if weights is not None:
             raise Exception('weighted Partial-correlation is not supported. Please avoid using weights.')
-        super().__init__(dataset, threshold, database_type=np.float, weights=weights, retained_edges=retained_edges,
+        super().__init__(dataset, threshold, database_type=float, weights=weights, retained_edges=retained_edges,
                          count_tests=count_tests, use_cache=use_cache, num_records=num_records, num_vars=num_vars)
 
         self.correlation_matrix = None
@@ -270,7 +270,7 @@ class CondIndepParCorr(StatCondIndep):
 
 class CondIndepCMI(StatCondIndep):
     def __init__(self, dataset, threshold, weights=None, retained_edges=None, count_tests=False, use_cache=False):
-        self.weight_data_type = np.float
+        self.weight_data_type = float
         if weights is not None:
             weights = np.array(weights, dtype=self.weight_data_type)
             # if np.min(weights) < 0:
@@ -278,7 +278,7 @@ class CondIndepCMI(StatCondIndep):
             # if np.abs(np.sum(weights) - 1.0) > np.finfo(self.weight_data_type).eps:
             #     raise Exception('Sample weights do not sum to 1.0')
             # weights *= dataset.shape[0]
-        super().__init__(dataset, threshold, database_type=np.int, weights=weights, retained_edges=retained_edges,
+        super().__init__(dataset, threshold, database_type=int, weights=weights, retained_edges=retained_edges,
                          count_tests=count_tests, use_cache=use_cache)
 
     def cond_indep(self, x, y, zz):

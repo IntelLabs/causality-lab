@@ -293,7 +293,7 @@ class MixedGraph:
         :return:
         """
         num_nodes = len(self.nodes_set)
-        adj_mat = np.zeros((num_nodes, num_nodes), dtype=np.int)
+        adj_mat = np.zeros((num_nodes, num_nodes), dtype=int)
         node_index_map = {node: i for i, node in enumerate(sorted(list(self.nodes_set)))}
 
         for node in self._graph:
