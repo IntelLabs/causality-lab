@@ -137,7 +137,8 @@ class DSep:
 class StatCondIndep:
     def __init__(self,
                  dataset, threshold, database_type, weights=None,
-                 retained_edges=None, count_tests=False, use_cache=False, verbose=False):
+                 retained_edges=None, count_tests=False, use_cache=False, verbose=False,
+                 num_records=None, num_vars=None):
         """
         Base class for statistical conditional independence tests
         :param dataset:
@@ -149,8 +150,14 @@ class StatCondIndep:
         """
         self.verbose = verbose
 
-        data = np.array(dataset, dtype=database_type)
-        num_records, num_vars = data.shape
+        if dataset is not None:
+            assert num_records is None and num_vars is None
+            data = np.array(dataset, dtype=database_type)
+            num_records, num_vars = data.shape
+        else:
+            data = None
+            assert num_records is not None and num_records > 0
+            assert num_vars is not None and num_vars > 0
 
         if retained_edges is None:
             self.retained_graph = UndirectedGraph(set(range(num_vars)))
@@ -219,12 +226,16 @@ class StatCondIndep:
 
 
 class CondIndepParCorr(StatCondIndep):
-    def __init__(self, threshold, dataset, weights=None, retained_edges=None, count_tests=False, use_cache=False):
+    def __init__(self, threshold, dataset, weights=None, retained_edges=None, count_tests=False, use_cache=False,
+                 num_records=None, num_vars=None):
         if weights is not None:
             raise Exception('weighted Partial-correlation is not supported. Please avoid using weights.')
         super().__init__(dataset, threshold, database_type=np.float, weights=weights, retained_edges=retained_edges,
-                         count_tests=count_tests, use_cache=use_cache)
-        self.correlation_matrix = np.corrcoef(self.data, rowvar=False)  # np.corrcoef(self.data.T)
+                         count_tests=count_tests, use_cache=use_cache, num_records=num_records, num_vars=num_vars)
+
+        self.correlation_matrix = None
+        if self.data is not None:
+            self.correlation_matrix = np.corrcoef(self.data, rowvar=False)  # np.corrcoef(self.data.T)
         self.data = None  # no need to store the data, as we have the correlation matrix
 
     def calc_statistic(self, x, y, zz):
