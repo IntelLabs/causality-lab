@@ -165,7 +165,9 @@ class StatCondIndep:
         else:
             self.retained_graph = retained_edges
 
-        node_size = get_var_size(data)
+        node_size = None
+        if data is not None:
+            node_size = get_var_size(data)
 
         self.data = data
         self.num_records = num_records
