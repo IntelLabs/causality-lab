@@ -243,18 +243,30 @@ class CondIndepParCorr(StatCondIndep):
     def calc_statistic(self, x, y, zz):
         corr_coef = self.correlation_matrix  # for readability
         if len(zz) == 0:
+            if corr_coef[x, y] >= 1.0:
+                return 0
+
             par_corr = corr_coef[x, y]
         elif len(zz) == 1:
             z = zz[0]
+
+            if corr_coef[x, z] >= 1.0 or corr_coef[y, z] >= 1.0:
+                return 0
+
             par_corr = (
-                (corr_coef[x, y] - corr_coef[x, z]*corr_coef[y, z]) /
-                np.sqrt((1-np.power(corr_coef[x, z], 2)) * (1-np.power(corr_coef[y, z], 2)))
+                    (corr_coef[x, y] - corr_coef[x, z] * corr_coef[y, z]) /
+                    np.sqrt((1 - np.power(corr_coef[x, z], 2)) * (1 - np.power(corr_coef[y, z], 2)))
             )
         else:  # zz contains 2 or more variables
             all_var_idx = (x, y) + zz
             corr_coef_subset = corr_coef[np.ix_(all_var_idx, all_var_idx)]
             inv_corr_coef = -np.linalg.inv(corr_coef_subset)  # consider using pinv instead of inv
-            par_corr = inv_corr_coef[0, 1] / np.sqrt(abs(inv_corr_coef[0, 0]*inv_corr_coef[1, 1]))
+            par_corr = inv_corr_coef[0, 1] / np.sqrt(abs(inv_corr_coef[0, 0] * inv_corr_coef[1, 1]))
+
+        if par_corr >= 1.0:
+            return 0
+        if par_corr <= 0:
+            return np.infty
 
         degrees_of_freedom = self.num_records - (len(zz) + 2)  # degrees of freedom to be used to calculate p-value
 
@@ -263,9 +275,9 @@ class CondIndepParCorr(StatCondIndep):
         # statistic = 2 * stats.t.sf(abs(t_statistic), degrees_of_freedom)  # p-value
 
         # Estimation based on Fisher z-transform
-        z = 0.5 * np.log1p(2*par_corr / (1-par_corr))  # Fisher Z-transform, 0.5*log( (1+par_corr)/(1-par_corr) )
+        z = 0.5 * np.log1p(2 * par_corr / (1 - par_corr))  # Fisher Z-transform, 0.5*log( (1+par_corr)/(1-par_corr) )
         val_for_cdf = abs(np.sqrt(degrees_of_freedom - 1) * z)  # approximately normally distributed
-        statistic = 2 * (1-stats.norm.cdf(val_for_cdf))  # p-value
+        statistic = 2 * (1 - stats.norm.cdf(val_for_cdf))  # p-value
 
         return statistic
 
