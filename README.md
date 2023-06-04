@@ -3,6 +3,9 @@
 This repository contains research code of novel causal discovery algorithms developed at Intel Labs, as well as other common algorithms, 
 and classes for developing and examining new algorithms for causal structure learning.
 
+**Update**: [TS-ICD](https://arxiv.org/abs/2306.00624) is a new algorithm ([ICML 2023](https://icml.cc/virtual/2023/poster/24237)) for causal discovery from time series data in the presence of latent confounders.
+See [this notebook](notebooks/causal_discovery_from_time_series.ipynb) for an example.
+
 ## Table of Contents
 
 - [Algorithms and Baselines](#algorithms-and-baselines)
@@ -25,6 +28,7 @@ There are two families of algorithms:
 2. **Causal discovery in the presence of latent confounders and selection bias**
    1. FCI algorithm, Fast Causal Inference (Spirtes et at., 2000)
    2. ICD algorithm, Iterative Causal Discovery ([Rohekar et al., NeurIPS 2021](https://arxiv.org/abs/2111.04095))
+   3. TS-ICD algorithm, ICD for time-series data ([Rohekar et al., ICML 2023](https://arxiv.org/abs/2306.00624))
 
 ![Example ICD](imgs/ExampleAnimationICD.gif)
 
@@ -99,11 +103,11 @@ The learned structures can then be plotted - see a complete example for creating
 
 ## References
 
-
+* Rohekar, Raanan Y., Shami Nisimov, Yaniv Gurwicz, and Gal Novik. "From Temporal to Contemporaneous Iterative Causal Discovery in the Presence of Latent Confounders" International Conference on Machine Learning (ICML), 2023
+* Rohekar, Raanan Y., Shami Nisimov, Yaniv Gurwicz, and Gal Novik. "Iterative Causal Discovery in the Possible Presence of Latent Confounders and Selection Bias" Advances in Neural Information Processing Systems (NeurIPS) 34, 2021. 
+* Rohekar, Raanan Y., Yaniv Gurwicz, Shami Nisimov, and Gal Novik. "Modeling Uncertainty by Learning a Hierarchy of Deep Neural Connections". Advances in Neural Information Processing Systems (NeurIPS) 32: 4244-4254, 2019.
+* Rohekar, Raanan Y., Yaniv Gurwicz, Shami Nisimov, Guy Koren, and Gal Novik. "Bayesian Structure Learning by Recursive Bootstrap." Advances in Neural Information Processing Systems (NeurIPS) 31: 10525-10535, 2018a.
+* Rohekar, Raanan Y., Shami Nisimov, Yaniv Gurwicz, Guy Koren, and Gal Novik. "Constructing Deep Neural Networks by Bayesian Network Structure Learning". Advances in Neural Information Processing Systems (NeurIPS) 31: 3047-3058, 2018b.
+* Yehezkel, Raanan, and Boaz Lerner. "Bayesian Network Structure Learning by Recursive Autonomy Identification". Journal of Machine Learning Research (JMLR) 10, no. 7, 2009
 * Richardson, Thomas, Peter Spirtes. "Ancestral graph Markov models". The Annals of Statistics, 30 (4): 962–1030, 2002.
-* Rohekar, Raanan Y., Yaniv Gurwicz, Shami Nisimov, Guy Koren, and Gal Novik. "Bayesian Structure Learning by Recursive Bootstrap." Advances in Neural Information Processing Systems 31: 10525-10535, 2018.
-* Rohekar, Raanan Y., Shami Nisimov, Yaniv Gurwicz, Guy Koren, and Gal Novik. "Constructing Deep Neural Networks by Bayesian Network Structure Learning". Advances in Neural Information Processing Systems 31: 3047-3058, 2018b.
-* Rohekar, Raanan Y., Yaniv Gurwicz, Shami Nisimov, and Gal Novik. "Modeling Uncertainty by Learning a Hierarchy of Deep Neural Connections". Advances in Neural Information Processing Systems 32: 4244-4254, 2019.
-* Rohekar, Raanan Y., Shami Nisimov, Yaniv Gurwicz, and Gal Novik. "Iterative Causal Discovery in the Possible Presence of Latent Confounders and Selection Bias." Advances in Neural Information Processing Systems 34, 2021.
 * Spirtes, Peter, Clark N. Glymour, Richard Scheines, and David Heckerman. "Causation, prediction, and search". MIT press, 2000.
-* Yehezkel, Raanan, and Boaz Lerner. "Bayesian Network Structure Learning by Recursive Autonomy Identification". Journal of Machine Learning Research 10, no. 7, 2009
