@@ -156,7 +156,7 @@ def draw_node(axes, pos, node_radius,
 
 
 def draw_graph(graph, latent_nodes=None, selection_nodes=None, bkcolor='white', fgcolor='black', line_color='auto',
-               layout_type=None, node_labels=None, top=1, right=1):
+               layout_type=None, node_labels=None, top=1, right=1, node_size_factor=1.0):
     """
     Draw a graph. Currently supported graph types are DAG and PAG. Matplotlib is used as a backend.
     :param graph: the graph to be plotted
@@ -169,6 +169,7 @@ def draw_graph(graph, latent_nodes=None, selection_nodes=None, bkcolor='white', 
     :param line_color: color of the node contour and text
     :param layout_type: type of node position layout: 'circular' or 'force' (default; force-directed algorithm)
     :param node_labels: a mapping from node ID's to desired labels in the rendered graph.
+    :param node_size_factor: increase (value > 1) or decrease (value < 1) the node size.
     :return:
     """
     assert isinstance(graph, (DAG, PAG))
@@ -186,7 +187,7 @@ def draw_graph(graph, latent_nodes=None, selection_nodes=None, bkcolor='white', 
     # top = 1
     left = 0
     # right = 1
-    node_radius = 0.04
+    node_radius = 0.04 * node_size_factor
     width = right - left
     height = top - bottom
     fig = plt.figure()
