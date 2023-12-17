@@ -192,8 +192,10 @@ class LearnStructICD(LearnStructBase):
         :return: a list of conditioning sets to consider when testing CI between node_i and node_j
         """
         # create PDS-trees for the tested nodes
-        pds_tree_i, possible_d_sep_i = self._create_pds_tree(node_i, max_depth=cond_set_size)
-        pds_tree_j, possible_d_sep_j = self._create_pds_tree(node_j, max_depth=cond_set_size)
+        pds_tree_i, possible_d_sep_i = create_pds_tree(self.graph, node_i, max_depth=cond_set_size)
+        pds_tree_j, possible_d_sep_j = create_pds_tree(self.graph, node_j, max_depth=cond_set_size)
+        # pds_tree_i, possible_d_sep_i = self._create_pds_tree(node_i, max_depth=cond_set_size)
+        # pds_tree_j, possible_d_sep_j = self._create_pds_tree(node_j, max_depth=cond_set_size)
 
         cond_sets_list_init = pds_tree_i.get_subsets_list(set_nodes=possible_d_sep_i, subset_size=cond_set_size)
         cond_sets_list_init += pds_tree_j.get_subsets_list(set_nodes=possible_d_sep_j, subset_size=cond_set_size)
@@ -229,75 +231,149 @@ class LearnStructICD(LearnStructBase):
                 return False
         return True
 
-    def _create_pds_tree(self, node_root, max_depth=None):
-        """
-        Create a PDS-tree rooted at node_root.
+    # def _create_pds_tree(self, node_root, max_depth=None):
+    #     """
+    #     Create a PDS-tree rooted at node_root.
+    #
+    #     :param node_root: root of the PDS tree
+    #     :param max_depth: maximal depth of the tree (search radius around the root)
+    #     :return: a PDS-tree
+    #     """
+    #
+    #     # Three lists are maintained: "first_nodes", "second_nodes", "neighbors".
+    #     # Corresponding elements from the lists,
+    #     #   "node_1" in "first_nodes",
+    #     #   "node_2" in "second_nodes", and
+    #     #   "node_3" in "neighbors",
+    #     # form a path "node_1" --- "node_2" --- "node_3"
+    #     # If this path is "legal" then "node_2" is in the possible-d-sep set and added to the PDS-tree
+    #
+    #     pds_tree = PDSTree(node_root)  # initialize
+    #
+    #     # create an adjacency matrix (ignore edge-marks)
+    #     adj_graph = self.graph.get_skeleton_graph()
+    #
+    #     # initialize "first nodes" and "second nodes" lists
+    #     neighbors = adj_graph.get_neighbors(node_root)
+    #     second_nodes = neighbors.copy()
+    #     first_nodes = [node_root for _ in range(len(second_nodes))]
+    #
+    #     # initialize possible-d-sep list of nodes
+    #     pds_nodes = neighbors.copy()  # initially: the neighbors of the node
+    #     for node_nb in neighbors:
+    #         adj_graph.remove_edge(node_root, node_nb)  # make sure the search doesn't loop back to the root
+    #
+    #     # ----- for creating a PDS-tree -----\
+    #     if max_depth is None:  # do not limit depth
+    #         max_depth = len(self.graph.nodes_set) - 1
+    #     # create "first_nodes" and "second_nodes" trees
+    #     first_nodes_trees = [pds_tree for _ in range(len(second_nodes))]
+    #     for node in pds_nodes:
+    #         pds_tree.add_branch(node)  # add nodes to the PDS-tree
+    #         second_nodes_trees = pds_tree.children.copy()  # update "node_2 trees" list
+    #     # now, both node_1_trees and node_2_trees have corresponding elements
+    #     # -End: for creating a PDS-tree -----/
+    #
+    #     while len(second_nodes) > 0:
+    #         node_1 = first_nodes.pop(0)
+    #         node_2 = second_nodes.pop(0)
+    #
+    #         # ----- for creating a PDS-tree -----
+    #         node_2_tree = second_nodes_trees.pop(0)
+    #         if node_2_tree.depth_level >= max_depth:
+    #             continue  # skip the current pair: node_1 *--> node_2 (do not search <--* node_3 )
+    #         # -End: for creating a PDS-tree -----
+    #
+    #         neighbors = adj_graph.get_neighbors(node_2)
+    #
+    #         for node_3 in neighbors:
+    #             if self.graph.is_possible_collider(node_x=node_1, node_middle=node_2, node_y=node_3):  # test sub-path
+    #                 adj_graph.remove_edge(node_2, node_3)
+    #                 first_nodes.append(node_2)
+    #                 second_nodes.append(node_3)
+    #                 pds_nodes.append(node_3)
+    #
+    #                 # ----- for creating a PDS-tree -----
+    #                 node_2_tree.add_branch(node_3)
+    #                 added_branch = node_2_tree.get_child_branch(node_3)  # get the added child branch
+    #                 second_nodes_trees.append(added_branch)
+    #                 first_nodes_trees.append(node_2_tree)
+    #                 # -End: for creating a PDS-tree -----
+    #
+    #     possible_d_sep_set = set(pds_nodes)
+    #     possible_d_sep_set.discard(node_root)
+    #     return pds_tree, possible_d_sep_set
 
-        :param node_root: root of the PDS tree
-        :param max_depth: maximal depth of the tree (search radius around the root)
-        :return: a PDS-tree
-        """
 
-        # Three lists are maintained: "first_nodes", "second_nodes", "neighbors".
-        # Corresponding elements from the lists,
-        #   "node_1" in "first_nodes",
-        #   "node_2" in "second_nodes", and
-        #   "node_3" in "neighbors",
-        # form a path "node_1" --- "node_2" --- "node_3"
-        # If this path is "legal" then "node_2" is in the possible-d-sep set and added to the PDS-tree
+def create_pds_tree(source_pag, node_root, max_depth=None):
+    """
+    Create a PDS-tree rooted at node_root.
 
-        pds_tree = PDSTree(node_root)  # initialize
+    :param node_root: root of the PDS tree
+    :param max_depth: maximal depth of the tree (search radius around the root)
+    :return: a PDS-tree
+    """
 
-        # create an adjacency matrix (ignore edge-marks)
-        adj_graph = self.graph.get_skeleton_graph()
+    # Three lists are maintained: "first_nodes", "second_nodes", "neighbors".
+    # Corresponding elements from the lists,
+    #   "node_1" in "first_nodes",
+    #   "node_2" in "second_nodes", and
+    #   "node_3" in "neighbors",
+    # form a path "node_1" --- "node_2" --- "node_3"
+    # If this path is "legal" then "node_2" is in the possible-d-sep set and added to the PDS-tree
 
-        # initialize "first nodes" and "second nodes" lists
-        neighbors = adj_graph.get_neighbors(node_root)
-        second_nodes = neighbors.copy()
-        first_nodes = [node_root for _ in range(len(second_nodes))]
+    pds_tree = PDSTree(node_root)  # initialize
 
-        # initialize possible-d-sep list of nodes
-        pds_nodes = neighbors.copy()  # initially: the neighbors of the node
-        for node_nb in neighbors:
-            adj_graph.remove_edge(node_root, node_nb)  # make sure the search doesn't loop back to the root
+    # create an adjacency matrix (ignore edge-marks)
+    adj_graph = source_pag.get_skeleton_graph()
 
-        # ----- for creating a PDS-tree -----\
-        if max_depth is None:  # do not limit depth
-            max_depth = len(self.graph.nodes_set) - 1
-        # create "first_nodes" and "second_nodes" trees
-        first_nodes_trees = [pds_tree for _ in range(len(second_nodes))]
-        for node in pds_nodes:
-            pds_tree.add_branch(node)  # add nodes to the PDS-tree
-            second_nodes_trees = pds_tree.children.copy()  # update "node_2 trees" list
-        # now, both node_1_trees and node_2_trees have corresponding elements
-        # -End: for creating a PDS-tree -----/
+    # initialize "first nodes" and "second nodes" lists
+    neighbors = adj_graph.get_neighbors(node_root)
+    second_nodes = neighbors.copy()
+    first_nodes = [node_root for _ in range(len(second_nodes))]
 
-        while len(second_nodes) > 0:
-            node_1 = first_nodes.pop(0)
-            node_2 = second_nodes.pop(0)
+    # initialize possible-d-sep list of nodes
+    pds_nodes = neighbors.copy()  # initially: the neighbors of the node
+    for node_nb in neighbors:
+        adj_graph.remove_edge(node_root, node_nb)  # make sure the search doesn't loop back to the root
 
-            # ----- for creating a PDS-tree -----
-            node_2_tree = second_nodes_trees.pop(0)
-            if node_2_tree.depth_level >= max_depth:
-                continue  # skip the current pair: node_1 *--> node_2 (do not search <--* node_3 )
-            # -End: for creating a PDS-tree -----
+    # ----- for creating a PDS-tree -----\
+    if max_depth is None:  # do not limit depth
+        max_depth = len(source_pag.nodes_set) - 1
+    # create "first_nodes" and "second_nodes" trees
+    first_nodes_trees = [pds_tree for _ in range(len(second_nodes))]
+    for node in pds_nodes:
+        pds_tree.add_branch(node)  # add nodes to the PDS-tree
+        second_nodes_trees = pds_tree.children.copy()  # update "node_2 trees" list
+    # now, both node_1_trees and node_2_trees have corresponding elements
+    # -End: for creating a PDS-tree -----/
 
-            neighbors = adj_graph.get_neighbors(node_2)
+    while len(second_nodes) > 0:
+        node_1 = first_nodes.pop(0)
+        node_2 = second_nodes.pop(0)
 
-            for node_3 in neighbors:
-                if self.graph.is_possible_collider(node_x=node_1, node_middle=node_2, node_y=node_3):  # test sub-path
-                    adj_graph.remove_edge(node_2, node_3)
-                    first_nodes.append(node_2)
-                    second_nodes.append(node_3)
-                    pds_nodes.append(node_3)
+        # ----- for creating a PDS-tree -----
+        node_2_tree = second_nodes_trees.pop(0)
+        if node_2_tree.depth_level >= max_depth:
+            continue  # skip the current pair: node_1 *--> node_2 (do not search <--* node_3 )
+        # -End: for creating a PDS-tree -----
 
-                    # ----- for creating a PDS-tree -----
-                    node_2_tree.add_branch(node_3)
-                    added_branch = node_2_tree.get_child_branch(node_3)  # get the added child branch
-                    second_nodes_trees.append(added_branch)
-                    first_nodes_trees.append(node_2_tree)
-                    # -End: for creating a PDS-tree -----
+        neighbors = adj_graph.get_neighbors(node_2)
 
-        possible_d_sep_set = set(pds_nodes)
-        possible_d_sep_set.discard(node_root)
-        return pds_tree, possible_d_sep_set
+        for node_3 in neighbors:
+            if source_pag.is_possible_collider(node_x=node_1, node_middle=node_2, node_y=node_3):  # test sub-path
+                adj_graph.remove_edge(node_2, node_3)
+                first_nodes.append(node_2)
+                second_nodes.append(node_3)
+                pds_nodes.append(node_3)
+
+                # ----- for creating a PDS-tree -----
+                node_2_tree.add_branch(node_3)
+                added_branch = node_2_tree.get_child_branch(node_3)  # get the added child branch
+                second_nodes_trees.append(added_branch)
+                first_nodes_trees.append(node_2_tree)
+                # -End: for creating a PDS-tree -----
+
+    possible_d_sep_set = set(pds_nodes)
+    possible_d_sep_set.discard(node_root)
+    return pds_tree, possible_d_sep_set
