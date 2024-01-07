@@ -17,6 +17,7 @@ class CLEANN:
             It takes as input: a list of all tokens, a list of indexes of tokens subset to be considered as explanation,
             and the index of the target token for which we are seeking an explanation.
             It outputs True if the explanation is confirmed, otherwise False.
+            If None is set, then the largest potential explanation will be returned as an explanation by method explain.
         :param nodes_set: a list of tokens, where each token will be a node in the learned graph.
         :param search_minimal: If True, only the explanations with the minimal size will be returned. If False, all
             the explanations found from the graph will be returned.
@@ -81,16 +82,20 @@ class CLEANN:
             max_size = max_set_size
 
         explanations_list = []
-        found_explanation = False
-        for set_size in range(1, max_size+1):
-            sets_list = pds_tree.get_subsets_list(set_nodes=full_explain_set, subset_size=set_size)
-            sets_list.sort(key=lambda x: x[1])  # sort with respect to the sum of minimal distances
-            for possible_explanation_set in sets_list:
-                if self.is_explanation(list(possible_explanation_set[0]), target_node_idx):
-                    explanations_list.append(possible_explanation_set)
-                    found_explanation = True
-            if found_explanation and self._search_minimal:
-                break
+        if self.is_explanation is None:
+            if len(full_explain_set) <= max_size:
+                explanations_list.append([full_explain_set, max_size])
+        else:
+            found_explanation = False
+            for set_size in range(1, max_size+1):
+                sets_list = pds_tree.get_subsets_list(set_nodes=full_explain_set, subset_size=set_size)
+                sets_list.sort(key=lambda x: x[1])  # sort with respect to the sum of minimal distances
+                for possible_explanation_set in sets_list:
+                    if self.is_explanation(list(possible_explanation_set[0]), target_node_idx):
+                        explanations_list.append(possible_explanation_set)
+                        found_explanation = True
+                if found_explanation and self._search_minimal:
+                    break
 
         results['explanations'] = explanations_list
         self.results[target_node_idx] = results
