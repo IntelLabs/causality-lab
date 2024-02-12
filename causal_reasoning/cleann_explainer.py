@@ -62,7 +62,7 @@ class CLEANN:
         :return: a list of minimal explanations (all explanations have the same size).
         """
         if target_node_idx in self.results:
-            return
+            return self.results[target_node_idx]['explanations']
 
         # learn a Graph if one haven't been learned already
         if self.graph is None:
