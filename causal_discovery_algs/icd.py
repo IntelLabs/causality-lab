@@ -238,12 +238,13 @@ class LearnStructICD(LearnStructBase):
         return True
 
 
-def create_pds_tree(source_pag, node_root, max_depth=None):
+def create_pds_tree(source_pag, node_root, en_nodes=None, max_depth=None):
     """
     Create a PDS-tree rooted at node_root.
 
     :param source_pag: the partial ancestral graph from which to construct the PDS-tree
     :param node_root: root of the PDS tree
+    :param en_nodes: nodes of interest
     :param max_depth: maximal depth of the tree (search radius around the root)
     :return: a PDS-tree
     """
@@ -256,10 +257,14 @@ def create_pds_tree(source_pag, node_root, max_depth=None):
     # form a path "node_1" --- "node_2" --- "node_3"
     # If this path is "legal" then "node_2" is in the possible-d-sep set and added to the PDS-tree
 
+    if en_nodes is not None:
+        assert node_root in en_nodes
+        assert en_nodes.issubset(source_pag.nodes_set)
+
     pds_tree = PDSTree(node_root)  # initialize
 
     # create an adjacency matrix (ignore edge-marks)
-    adj_graph = source_pag.get_skeleton_graph()
+    adj_graph = source_pag.get_skeleton_graph(en_nodes=en_nodes)
 
     # initialize "first nodes" and "second nodes" lists
     neighbors = adj_graph.get_neighbors(node_root)
@@ -273,7 +278,7 @@ def create_pds_tree(source_pag, node_root, max_depth=None):
 
     # ----- for creating a PDS-tree -----\
     if max_depth is None:  # do not limit depth
-        max_depth = len(source_pag.nodes_set) - 1
+        max_depth = len(adj_graph.nodes_set) - 1
     # create "first_nodes" and "second_nodes" trees
     first_nodes_trees = [pds_tree for _ in range(len(second_nodes))]
     for node in pds_nodes:
