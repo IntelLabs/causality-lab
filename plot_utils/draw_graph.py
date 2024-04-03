@@ -1,10 +1,14 @@
+import PIL.Image
 from matplotlib import pyplot as plt
 from matplotlib import patches
 from math import sqrt
 from .graph_layout import ForceDirectedLayout, CircleLayout, ColumnLayout
-from graphical_models import DAG, PAG, arrow_head_types as Mark
+from graphical_models import DAG, PAG, PDSTree, arrow_head_types as Mark
 from itertools import combinations
 import numpy as np
+from math import cos, sin, pi
+from PIL import Image
+from matplotlib.offsetbox import (OffsetImage, AnnotationBbox)
 
 
 def draw_edge(axes, pos0, pos1, node_radius,
@@ -151,12 +155,22 @@ def draw_node(axes, pos, node_radius,
         axes.add_patch(patches.Circle(pos, node_radius, facecolor=fill_color, edgecolor=line_color))
 
     # node text
-    axes.text(pos[0], pos[1], str(node_name), horizontalalignment='center', verticalalignment='center',
-              color=text_color, fontdict=font_dict)
+    if type(node_name) in (str, int):
+        axes.text(pos[0], pos[1], str(node_name), horizontalalignment='center', verticalalignment='center',
+                  color=text_color, fontdict=font_dict)
+    elif type(node_name) == Image.Image:
+        im_width, im_height = node_name.size
+        zoom = node_radius / max(im_width, im_width)
+        print(f'Node rad: {node_radius}, im_width: {im_width}, im_height: {im_height}')
+        imagebox = OffsetImage(node_name)
+        ab = AnnotationBbox(imagebox, (pos[0], pos[1]), frameon=False)
+        axes.add_artist(ab)
+    else:
+        raise 'Unsupported label format. Currently supporting str, int, and PIL.Image.Image'
 
 
 def draw_graph(graph, latent_nodes=None, selection_nodes=None, bkcolor='white', fgcolor='black', line_color='auto',
-               layout_type=None, node_labels=None, top=1, right=1, node_size_factor=1.0):
+               layout_type=None, node_labels=None, top=1, right=1, node_size_factor=1.0, show=True):
     """
     Draw a graph. Currently supported graph types are DAG and PAG. Matplotlib is used as a backend.
     :param graph: the graph to be plotted
@@ -170,6 +184,7 @@ def draw_graph(graph, latent_nodes=None, selection_nodes=None, bkcolor='white', 
     :param layout_type: type of node position layout: 'circular' or 'force' (default; force-directed algorithm)
     :param node_labels: a mapping from node ID's to desired labels in the rendered graph.
     :param node_size_factor: increase (value > 1) or decrease (value < 1) the node size.
+    :param show: if True, calls matplotlib.pyplot.show after creating the figure (default: True)
     :return:
     """
     assert isinstance(graph, (DAG, PAG))
@@ -253,7 +268,159 @@ def draw_graph(graph, latent_nodes=None, selection_nodes=None, bkcolor='white', 
                 draw_edge(ax,
                           nodes_pos[parent_node], nodes_pos[child_node],
                           node_radius, line_color=line_color)
-    plt.show()
+    if show:
+        plt.show()
+    return fig
+
+
+def draw_pds_tree(pds_tree, pag=None, marked_nodes=None, node_labels=None,
+                  node_size_factor=1.0,
+                  bkcolor='black', fgcolor='#0068e2', line_color='auto',
+                  circ_plot=False, show=True):
+    assert isinstance(pds_tree, PDSTree)
+
+    if node_labels is None:
+        node_labels = dict()
+
+    node_radius = 0.25 * node_size_factor
+    margin = 1 * node_radius  # margin from each border
+    if marked_nodes is None:
+        marked_nodes = set()
+    if node_labels is None:
+        node_labels = dict()
+
+    max_depth = pds_tree.get_max_depth() - 1  # number of nodes
+    canvas_radius = max_depth + margin
+
+    root_position = {'x': 0, 'y': 0}
+
+    fig = plt.figure(figsize=(8, 5))
+    ax = fig.add_axes([0, 0, 1, 1], frameon=False, aspect=1.)
+    ax.set_aspect('equal', adjustable='box')
+    ax.set_axis_off()
+    ax.set_xlim([-canvas_radius, canvas_radius])
+    ax.set_ylim([-margin, canvas_radius])
+    radius = max_depth
+
+    if circ_plot:
+        start_angle = 0
+        stop_angle = 360
+        ax.set_xlim([-canvas_radius, canvas_radius])
+        ax.set_ylim([-canvas_radius, canvas_radius])
+    else:
+        start_angle = 0
+        stop_angle = 180
+        ax.set_xlim([-canvas_radius, canvas_radius])
+        ax.set_ylim([-margin, canvas_radius])
+
+    if max_depth > 1:
+        radii_diff = [radius * 1 / (max_depth - 1) for i in range(max_depth)]
+    else:
+        radii_diff = []
+
+    # Draw Grid
+    num_minor_grid = 5
+    angs = [start_angle+i*(stop_angle-start_angle)/(num_minor_grid-1) for i in range(num_minor_grid)]
+    angles_list = angs #[start_angle, 0.5*(start_angle+stop_angle), stop_angle]
+
+    for r in range(1, max_depth+1):
+        # w = patches.Wedge((root_position['x'], root_position['y']), r, start_angle, stop_angle,
+        #                   fc='none', edgecolor='black', linestyle='dotted', linewidth=0.5)
+        w = patches.Arc((root_position['x'], root_position['y']), r*2, r*2, theta1=start_angle, theta2=stop_angle,
+                        fc='none', edgecolor='black', linestyle='dotted', linewidth=0.5)
+        # w = patches.Circle((root_position['x'], root_position['y']), max_depth, fc='none', edgecolor='black')
+        ax.add_patch(w)
+        draw_node(ax, (root_position['x'] + r, root_position['y'] - 0.2), node_radius=0, node_name=str(r),
+                  line_color='white')
+        draw_node(ax, (root_position['x'] - r, root_position['y'] - 0.2), node_radius=0, node_name=str(r),
+                  line_color='white')
+
+    for angle in angles_list:
+        if angle in {angles_list[0], angles_list[-1]}:
+            linestyle = 'solid'
+        else:
+            linestyle = 'dotted'
+        w = patches.FancyArrowPatch((root_position['x'], root_position['y']),
+                                    (root_position['x'] + (radius) * cos(angle*pi/180),
+                                     root_position['y'] + (radius) * sin(angle*pi/180)),
+                                    edgecolor='black',
+                                    facecolor='black',
+                                    arrowstyle='-',
+                                    linestyle=linestyle,
+                                    linewidth=0.5
+                                    # mutation_scale=20, shrinkA=0, shrinkB=0,
+                                    # connectionstyle=connectionstyle
+                                    )
+        ax.add_patch(w)
+
+    # Draw graph recursively
+    def _draw_root_children(pds_tree_branch, pos, start_sector_angle, stop_sector_angle, depth=1):
+        """
+        Recursive drawing of the PDS-tree
+        :param pds_tree_branch: current node (the "root" of the current branch)
+        :param pos: position of the current node to be drawn
+        :param start_sector_angle: 1st border angle angle, relative to the canvas root
+        :param stop_sector_angle: 2nd border angle, relative to the canvas root
+        :param depth: current depth in the tree
+        :return:
+        """
+        current_node = pds_tree_branch.origin
+        fill_col = bkcolor
+        text_col = fgcolor
+        if current_node in marked_nodes:
+            fill_col, text_col = text_col, fill_col  # swap colors
+
+        if current_node not in node_labels:
+            node_labels[current_node] = current_node
+        if type(node_labels[current_node]) ==  PIL.Image.Image:
+            node_contour_color = 'white'
+        else:
+            node_contour_color = fgcolor
+        draw_node(ax, (pos['x'], pos['y']), node_radius=node_radius, node_name=node_labels[current_node],
+                  line_color=node_contour_color)
+        num_children = len(pds_tree_branch.children)
+        if num_children == 0:
+            return
+
+        child_angles_list = [start_sector_angle +
+                             (stop_sector_angle - start_sector_angle) * (1 / (2 * num_children) + i / num_children)
+                             for i in range(num_children)]  # with margins
+
+        child_pos_list = [
+            {'x': (cos(ang*pi/180) * depth + root_position['x']),
+             'y': (sin(ang*pi/180) * depth + root_position['y'])}
+            for ang in child_angles_list]
+
+        child_ang_limit = [start_sector_angle + i * (stop_sector_angle - start_sector_angle) / num_children
+                           for i in range(num_children + 1)]
+
+        for idx in range(num_children):
+            child = pds_tree_branch.children[idx]
+            child_pos = child_pos_list[idx]
+            child_start_ang = child_ang_limit[idx]
+            child_stop_ang = child_ang_limit[idx + 1]
+
+            # draw an edge to the child
+            draw_edge(ax,
+                      (pos['x'], pos['y']), (child_pos['x'], child_pos['y']),
+                      node_radius,
+                      pag.get_edge_mark(node_parent=current_node, node_child=child.origin),
+                      pag.get_edge_mark(node_parent=child.origin, node_child=current_node),
+                      line_color=line_color)
+
+            # call recursively for children
+            _draw_root_children(pds_tree_branch=child,
+                                pos=child_pos,
+                                start_sector_angle=child_start_ang, stop_sector_angle=child_stop_ang,
+                                depth=depth + 1)
+
+    _draw_root_children(pds_tree, root_position, start_angle, stop_angle, 1)
+
+    # draw_node(ax, (root_position['x'], root_position['y']), node_radius=node_radius, node_name=pds_tree.origin)
+
+    if show:
+        plt.show()
+
     return fig
 
 
