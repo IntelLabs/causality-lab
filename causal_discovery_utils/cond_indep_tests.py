@@ -293,11 +293,12 @@ class StatCondIndep:
 
 class CondIndepParCorr(StatCondIndep):
     def __init__(self, threshold, dataset, weights=None, retained_edges=None, count_tests=False, use_cache=False,
-                 num_records=None, num_vars=None):
+                 num_records=None, num_vars=None, verbose=False):
         if weights is not None:
             raise Exception('weighted Partial-correlation is not supported. Please avoid using weights.')
         super().__init__(dataset, threshold, database_type=float, weights=weights, retained_edges=retained_edges,
-                         count_tests=count_tests, use_cache=use_cache, num_records=num_records, num_vars=num_vars)
+                         count_tests=count_tests, use_cache=use_cache, num_records=num_records, num_vars=num_vars,
+                         verbose=verbose)
 
         self.correlation_matrix = None
         if self.data is not None:
@@ -330,7 +331,7 @@ class CondIndepParCorr(StatCondIndep):
         if par_corr >= 1.0:
             return 0
         if par_corr <= 0:
-            return np.infty
+            return np.inf
 
         degrees_of_freedom = self.num_records - (len(zz) + 2)  # degrees of freedom to be used to calculate p-value
 
