@@ -328,10 +328,8 @@ class CondIndepParCorr(StatCondIndep):
             inv_corr_coef = -np.linalg.inv(corr_coef_subset)  # consider using pinv instead of inv
             par_corr = inv_corr_coef[0, 1] / np.sqrt(abs(inv_corr_coef[0, 0] * inv_corr_coef[1, 1]))
 
-        if par_corr >= 1.0:
+        if abs(par_corr) >= 1.0:  # if outside the range [-1,+1] assume the variables are dependent
             return 0
-        if par_corr <= 0:
-            return np.inf
 
         degrees_of_freedom = self.num_records - (len(zz) + 2)  # degrees of freedom to be used to calculate p-value
 
