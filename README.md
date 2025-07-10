@@ -1,9 +1,10 @@
 # Causality Lab
 
-This repository contains research code of novel causal discovery algorithms developed at Intel Labs, as well as other common algorithms, 
-and classes for developing and examining new algorithms for causal structure learning.
+This repository contains research code for novel causal discovery algorithms developed at Intel Labs, along with implementations of classes and functions for developing and evaluating new algorithms for causal structure learning.
 
-**Update (December 2023)**: [CLEANN](https://arxiv.org/abs/2310.20307 "Rohekar Raanan, Gurwicz Yaniv, and Nisimov Shami. NeurIPS 2023") is novel algorithm presented at [NeurIPS 2023](https://neurips.cc/ "Advances in Neural Information Processing Systems"). It generates causal explanations for the outcomes of existing pre-trained Transformer neural networks. At its core, it is based on the novel causal interpretation of self-attention presented in the paper, and executes attention-based causal-discovery (ABCD).
+**Update (July 2025):** Can a GPT model, trained simply to predict the next token in a sequence, actually learn the underlying mechanisms of a domain? This question is addressed in a [paper](https://arxiv.org/abs/2412.07446 "Raanan Y. Rohekar, Yaniv Gurwicz, Sungduk Yu, Estelle Aflalo, and Vasudev Lal. ICML 2025"), presented at [ICML 2025](https://icml.cc "International Conference on Machine Learning"), where causal structures are learned from the attention mechanism of pre-trained GPT models. The causal discovery algorithm, called Ordered ICD (OrdICD), uses the given causal order to reduce the total number of CI tests compared to the ICD algorithm. See a [notebook](notebooks/causal_discovery_with_known_causal_order_latent_confounders.ipynb) for a simple synthetic example demonstrating the OrdICD algorithm implemented in this repository.
+
+See also [CLEANN](https://arxiv.org/abs/2310.20307 "Rohekar Raanan, Gurwicz Yaniv, and Nisimov Shami. NeurIPS 2023"), a novel algorithm presented at [NeurIPS 2023](https://neurips.cc "Advances in Neural Information Processing Systems"). It generates causal explanations for the outcomes of existing pre-trained BERT neural networks. At its core, it is based on a novel causal interpretation of self-attention presented in the paper and executes attention-based causal-discovery (ABCD).
 [This notebook](notebooks/causal_reasoning_with_CLEANN_explanations.ipynb) demonstrates, using a simple example, how to use CLEANN.
 
 ## Table of Contents
@@ -28,9 +29,11 @@ There are three families of algorithms:
 2. **Causal discovery in the presence of latent confounders and selection bias**
    1. FCI algorithm, Fast Causal Inference (Spirtes et at., 2000)
    2. ICD algorithm, Iterative Causal Discovery ([Rohekar et al., NeurIPS 2021](https://arxiv.org/abs/2111.04095))
-   3. TS-ICD algorithm, ICD for time-series data ([Rohekar et al., ICML 2023](https://arxiv.org/abs/2306.00624))
+   3. OrdICD algorithm, ICD using a causal order ([Rohekar et al., ICML 2025](https://arxiv.org/abs/2412.07446))
+   4. TS-ICD algorithm, ICD for time-series data ([Rohekar et al., ICML 2023](https://arxiv.org/abs/2306.00624))
 3. **Causal reasoning**
    1. CLEANN algorithm, Causal Explanation from Attention in Neural Networks ([Rohekar et al., 2023](https://arxiv.org/abs/2310.20307 "Rohekar Raanan, Gurwicz Yaniv, and Nisimov Shami. NeurIPS 2023"), [Nisimov et al., 2022](https://arxiv.org/abs/2210.10621 "Nisimov Shami, Rohekar Raanan, Gurwicz Yaniv, Koren Guy, and Novik Gal. CONSEQUENCES, RecSys 2022")).
+   2. A Causal World Model Underlying Next Token Prediction ([Rohekar et al., 2025](https://arxiv.org/abs/2412.07446 "Raanan Y. Rohekar, Yaniv Gurwicz, Sungduk Yu, Estelle Aflalo, and Vasudev Lal. ICML 2025"))
 
 ![Example ICD](imgs/ExampleAnimationICD.gif)
 
@@ -105,8 +108,9 @@ The learned structures can then be plotted - see a complete example for creating
 
 ## References
 
-* Rohekar, Raanan, Yaniv Gurwicz, and Shami Nisimov. "Causal Interpretation of Self-Attention in Pre-Trained Transformers". Advances in Neural Information Processing Systems (NeurIPS) 36, 2023. 
-* Rohekar, Raanan Y., Shami Nisimov, Yaniv Gurwicz, and Gal Novik. "From Temporal to Contemporaneous Iterative Causal Discovery in the Presence of Latent Confounders" International Conference on Machine Learning (ICML), 2023.
+* Rohekar Raanan Y., Yaniv Gurwicz, Sungduk Yu, Estelle Aflalo, and Vasudev Lal. "A Causal World Model Underlying Next Token Prediction: Exploring GPT in a Controlled Environment". International Conference on Machine Learning (ICML), 2025.
+* Rohekar, Raanan Y., Yaniv Gurwicz, and Shami Nisimov. "Causal Interpretation of Self-Attention in Pre-Trained Transformers". Advances in Neural Information Processing Systems (NeurIPS) 36, 2023. 
+* Rohekar, Raanan Y., Shami Nisimov, Yaniv Gurwicz, and Gal Novik. "From Temporal to Contemporaneous Iterative Causal Discovery in the Presence of Latent Confounders". International Conference on Machine Learning (ICML), 2023.
 * Nisimov, Shami, Raanan Y. Rohekar, Yaniv Gurwicz, Guy Koren, and Gal Novik. "CLEAR: Causal Explanations from Attention in Neural Recommenders". Causality, Counterfactuals and Sequential Decision-Making for Recommender Systems (CONSEQUENCES) workshop at RecSys, 2022.
 * Rohekar, Raanan Y., Shami Nisimov, Yaniv Gurwicz, and Gal Novik. "Iterative Causal Discovery in the Possible Presence of Latent Confounders and Selection Bias" Advances in Neural Information Processing Systems (NeurIPS) 34, 2021. 
 * Rohekar, Raanan Y., Yaniv Gurwicz, Shami Nisimov, and Gal Novik. "Modeling Uncertainty by Learning a Hierarchy of Deep Neural Connections". Advances in Neural Information Processing Systems (NeurIPS) 32: 4244-4254, 2019.
