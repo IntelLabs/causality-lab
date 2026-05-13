@@ -166,7 +166,7 @@ def draw_node(axes, pos, node_radius,
         ab = AnnotationBbox(imagebox, (pos[0], pos[1]), frameon=False)
         axes.add_artist(ab)
     else:
-        raise 'Unsupported label format. Currently supporting str, int, and PIL.Image.Image'
+        raise TypeError('Unsupported label format. Currently supporting str, int, and PIL.Image.Image')
 
 
 def draw_graph(graph, latent_nodes=None, selection_nodes=None, bkcolor='white', fgcolor='black', line_color='auto',

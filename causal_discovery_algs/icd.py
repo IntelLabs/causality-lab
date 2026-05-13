@@ -56,7 +56,7 @@ class LearnStructICD(LearnStructBase):
         """
 
         if self._state['done']:
-            raise "ICD already concluded. Cannot run more iterations"
+            raise RuntimeError("ICD already concluded. Cannot run more iterations")
 
         # -1- Run a single ICD iteration -------------------------------------------------------------------------------
         # for efficiency, handle special cases of ICD iterations (conditioning set is empty or contains a single node)

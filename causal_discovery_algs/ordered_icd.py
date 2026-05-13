@@ -22,9 +22,9 @@ class LearnStructOrderedICD(LearnStructBase):
             if len(causal_order) == len(nodes_set):
                 self.order = list(causal_order)
             else:
-                raise "Causal order length should be the same as the number of nodes."
+                raise ValueError("Causal order length should be the same as the number of nodes.")
         else:
-            raise "Causal order should be a list or a tuple."
+            raise TypeError("Causal order should be a list or a tuple.")
         self.is_tail_completeness = is_tail_completeness
         self.is_selection_bias = is_selection_bias
 
@@ -35,7 +35,7 @@ class LearnStructOrderedICD(LearnStructBase):
 
         if max_cond_size is not None:
             if max_cond_size < 0 or max_cond_size > (len(causal_order)-2):
-                raise "Invalid max_cond_size value."
+                raise ValueError("Invalid max_cond_size value.")
         self.max_cond_size = max_cond_size
 
     def learn_structure(self, local_structure_learning=False):
@@ -46,7 +46,7 @@ class LearnStructOrderedICD(LearnStructBase):
 
     def get_causal_pairs(self, start_base_idx=1):
         if start_base_idx < 1:
-            raise "base node index should be at least 1"
+            raise ValueError("base node index should be at least 1")
 
         n = len(self.order)
         for base_idx in range(start_base_idx, n):
