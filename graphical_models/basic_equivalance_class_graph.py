@@ -167,9 +167,11 @@ class MixedGraph:
             connected_nodes = connected_nodes & pool_nodes
         return connected_nodes
 
-    def find_reachable_set(self, anchor_node, nodes_pool, edge_type_list):
+    def find_reachable_set_recursive(self, anchor_node, nodes_pool, edge_type_list):
         """
-        Find the set of nodes that are reachable from a node via specific edge-types
+        Find the set of nodes that are reachable from a node via specific edge-types.
+        Original recursive implementation; kept for reference alongside the iterative
+        version in find_reachable_set.
         :param anchor_node: A node from which to start reaching
         :param nodes_pool: a set of nodes tested to be reachable
         :param edge_type_list: a list of edge types, e.g., [('<--', '---'), ('<--', '-->')]
@@ -194,9 +196,42 @@ class MixedGraph:
         updated_nodes_pool = nodes_pool - neighbors_set
 
         for neighbor in neighbors_set:
-            neighbor_reach = self.find_reachable_set(neighbor, updated_nodes_pool, edge_type_list)
+            neighbor_reach = self.find_reachable_set_recursive(neighbor, updated_nodes_pool, edge_type_list)
             reachable_set.update(neighbor_reach)
             updated_nodes_pool.difference_update(neighbor_reach)  # remove neighbor_reach from the pool
+
+        return reachable_set
+
+    def find_reachable_set(self, anchor_node, nodes_pool, edge_type_list):
+        """
+        Find the set of nodes that are reachable from a node via specific edge-types.
+        Iterative BFS — functionally equivalent to find_reachable_set_recursive, but
+        avoids Python recursion overhead and per-frame pool copies.
+        :param anchor_node: A node from which to start reaching
+        :param nodes_pool: a set of nodes tested to be reachable
+        :param edge_type_list: a list of edge types, e.g., [('<--', '---'), ('<--', '-->')]
+        :return: a set of nodes that are reachable from the anchor node
+        """
+        if not nodes_pool:
+            return set()
+
+        reachable_set = set()
+        allowed_pool = set(nodes_pool)
+        frontier = {anchor_node}
+
+        while frontier:
+            next_frontier = set()
+            for node in frontier:
+                if edge_type_list is None:
+                    next_frontier.update(
+                        self.find_adjacent_nodes(node, allowed_pool, None))
+                else:
+                    for edge_type in edge_type_list:
+                        next_frontier.update(
+                            self.find_adjacent_nodes(node, allowed_pool, edge_type))
+            reachable_set.update(next_frontier)
+            allowed_pool.difference_update(next_frontier)
+            frontier = next_frontier
 
         return reachable_set
 
