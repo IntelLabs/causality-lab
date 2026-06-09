@@ -54,7 +54,12 @@ class DAG(Graph):
         else:
             return False
 
-    def is_ancestor(self, descendant_node, tested_node):
+    def is_ancestor_recursive(self, descendant_node, tested_node):
+        """
+        Test whether tested_node is an ancestor of descendant_node (a node is its
+        own ancestor). Original recursive implementation; kept for reference
+        alongside the iterative version in is_ancestor.
+        """
         if descendant_node == tested_node:
             return True  # a node is defined to be its own ancestor
 
@@ -66,10 +71,33 @@ class DAG(Graph):
             return True  # found the tested_node
 
         for parent in parents_set:
-            if self.is_ancestor(descendant_node=parent, tested_node=tested_node):
+            if self.is_ancestor_recursive(descendant_node=parent, tested_node=tested_node):
                 return True  # found tested_node to be an ancestor of one of the parents
         else:
             return False  # tested_node is not an ancestor of one of the parents
+
+    def is_ancestor(self, descendant_node, tested_node):
+        """
+        Test whether tested_node is an ancestor of descendant_node (a node is its
+        own ancestor). Iterative DFS over parents — functionally equivalent to
+        is_ancestor_recursive, but avoids recursion.
+        """
+        if descendant_node == tested_node:
+            return True  # a node is defined to be its own ancestor
+
+        visited = {descendant_node}
+        stack = [descendant_node]
+        while stack:
+            node = stack.pop()
+            parents_set = self.parents(node)
+            if tested_node in parents_set:
+                return True  # reached the tested_node
+            for parent in parents_set:
+                if parent not in visited:
+                    visited.add(parent)
+                    stack.append(parent)
+
+        return False  # tested_node is not an ancestor of descendant_node
 
     def is_acyclic(self):
         for node in self._graph:
