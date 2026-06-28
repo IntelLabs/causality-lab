@@ -341,10 +341,12 @@ class PAG(MixedGraph):
         else:
             return None
 
-    def find_discriminating_path_to_triplet(self, node_a, node_b, node_c, nodes_set=None):
+    def find_discriminating_path_to_triplet_recursive(self, node_a, node_b, node_c, nodes_set=None):
         """
         Find a discriminating path from some node (denoted D) to node C for node B.
         That is, D *--> ? <--> ... <--> A <--* B *--* C
+        Original recursive implementation; kept for reference alongside the iterative
+        version in find_discriminating_path_to_triplet.
         :param node_a:
         :param node_b:
         :param node_c:
@@ -369,9 +371,49 @@ class PAG(MixedGraph):
         # didn't find a minimal discriminating path (containing three edges). Search with the new "A" nodes
         # we have D nodes that are part of the path D *--> A <--* B *--* C and D ---> C and A ---> C
         for new_node_a in new_a_nodes:
-            node_d = self.find_discriminating_path_to_triplet(new_node_a, node_b, node_c, nodes_set - {new_node_a})
+            node_d = self.find_discriminating_path_to_triplet_recursive(new_node_a, node_b, node_c, nodes_set - {new_node_a})
             if node_d is not None:
                 return node_d
+
+        return None  # didn't find a discriminating path
+
+    def find_discriminating_path_to_triplet(self, node_a, node_b, node_c, nodes_set=None):
+        """
+        Find a discriminating path from some node (denoted D) to node C for node B.
+        That is, D *--> ? <--> ... <--> A <--* B *--* C
+        Iterative BFS — functionally equivalent to find_discriminating_path_to_triplet_recursive,
+        but avoids Python-recursion overhead and per-branch nodes_set copies.
+        :param node_a:
+        :param node_b:
+        :param node_c:
+        :param nodes_set:
+        :return: Path source node (node D)
+        """
+        if nodes_set is None:
+            nodes_set = self.nodes_set - {node_a, node_b, node_c}  # create a copy
+
+        # BFS over successive "A" nodes. node_b, node_c stay fixed; only "A" advances along the path.
+        # The per-branch nodes_set shrinking of the recursion becomes a single global visited set:
+        # every new "A" is a parent of C (hence connected to C), while every returned source is not
+        # connected to C, so the two groups are disjoint and the search outcome is order-independent.
+        frontier = {node_a}
+        visited = {node_a, node_b, node_c}
+        while frontier:
+            next_frontier = set()
+            for cur_a in frontier:
+                # assumed: A <--* B *--* C or a path from A to B with all colliders & parents of C; and A ---> C,
+                # we need to find D such that D *--> A, D and C are disjoint
+                d_nodes = (self._graph[cur_a][Mark.Directed] - {node_b, node_c}) & nodes_set
+                for node_d in d_nodes:
+                    if not self.is_connected(node_d, node_c):  # found a discriminating path from D to C for B
+                        return node_d  # the source of the path
+                    # if D ---> C and D <--> A, then D becomes the "A" node in the new search triplet
+                    if (node_d not in visited and
+                            self.is_parent(node_d, node_c) and
+                            cur_a in self._graph[node_d][Mark.Directed]):
+                        next_frontier.add(node_d)
+            visited.update(next_frontier)
+            frontier = next_frontier
 
         return None  # didn't find a discriminating path
 
