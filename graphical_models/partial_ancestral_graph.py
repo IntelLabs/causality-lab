@@ -444,12 +444,14 @@ class PAG(MixedGraph):
         else:
             return False
 
-    def is_possible_ancestor(self, ancestor_node, descendant_node, en_nodes=None):
+    def is_possible_ancestor_recursive(self, ancestor_node, descendant_node, en_nodes=None):
         '''
         Test if one node is a possible ancestor of second node.
         This relation is true if there is a path <node_1, X(0), X(1), ..., X(n), node_2> such that for i=1,...,n-1,
         X(i) is a possible parent of X(i+1). Recall that X(i) is a possible parent of X(i+1) if on the edge between them
         there is no head-mark at X(i) and no tail-mark at X(i+1).
+        Original recursive implementation; kept for reference alongside the iterative
+        version in is_possible_ancestor.
         :param ancestor_node:
         :param descendant_node:
         :param en_nodes: considers paths that are consisted of these nodes. That is, a sug-graph is considered.
@@ -468,10 +470,41 @@ class PAG(MixedGraph):
         new_en_nodes = en_nodes - {ancestor_node}
         for node_child in possible_children:
             new_en_nodes.discard(node_child)
-            if self.is_possible_ancestor(node_child, descendant_node, new_en_nodes):
+            if self.is_possible_ancestor_recursive(node_child, descendant_node, new_en_nodes):
                 return True
         else:
             return False
+
+    def is_possible_ancestor(self, ancestor_node, descendant_node, en_nodes=None):
+        '''
+        Test if one node is a possible ancestor of second node.
+        This relation is true if there is a path <node_1, X(0), X(1), ..., X(n), node_2> such that for i=1,...,n-1,
+        X(i) is a possible parent of X(i+1). Recall that X(i) is a possible parent of X(i+1) if on the edge between them
+        there is no head-mark at X(i) and no tail-mark at X(i+1).
+        Iterative BFS — functionally equivalent to is_possible_ancestor_recursive, but
+        avoids Python recursion overhead and per-frame en_nodes copies.
+        :param ancestor_node:
+        :param descendant_node:
+        :param en_nodes: considers paths that are consisted of these nodes. That is, a sug-graph is considered.
+        :return: True if the relation exists in the graph; otherwise, False
+        '''
+        if en_nodes is None:
+            en_nodes = self.nodes_set
+
+        available = set(en_nodes)
+        available.discard(ancestor_node)
+        frontier = {ancestor_node}
+        while frontier:
+            next_frontier = set()
+            for node in frontier:
+                possible_children = self.find_possible_children(node, available)
+                if descendant_node in possible_children:
+                    return True
+                next_frontier.update(possible_children)
+            available.difference_update(next_frontier)
+            frontier = next_frontier
+
+        return False
 
     def is_set_possible_sink(self, nodes_set, ex_nodes=None):
         """
@@ -512,11 +545,41 @@ class PAG(MixedGraph):
         :param en_nodes: the nodes from which to search possible ancestors (sub-graph)
         :return: set of possible ancestors (including the input nodes set)
         """
-        # Todo: implement more efficiently
+        if not isinstance(descendants_set, (list, tuple, set)):  # make sure a set is received and not a single element
+            raise TypeError("descendants_set must be a list, tuple, or set")
+        if en_nodes is None:
+            en_nodes = self.nodes_set
+        elif not isinstance(en_nodes, set):
+            raise TypeError("en_nodes must be a set")
+
+        # Single multi-source BFS seeded from the descendants set
+        ancestors = set(descendants_set)          # input nodes are included, by contract
+        available = en_nodes - ancestors
+
+        frontier = ancestors & en_nodes
+        while frontier:
+            next_frontier = set()
+            for node in frontier:
+                next_frontier |= self.find_possible_parents(node, available)  # one hop toward ancestors
+            available -= next_frontier
+            ancestors |= next_frontier
+            frontier = next_frontier
+
+        return ancestors
+
+    def find_possible_ancestors_old(self, descendants_set, en_nodes=None):
+        """
+        Find the set of possible ancestors of a set of nodes. Note: the input nodes are included in the result
+        :param descendants_set: the nodes for which we find the ancestors
+        :param en_nodes: the nodes from which to search possible ancestors (sub-graph)
+        :return: set of possible ancestors (including the input nodes set)
+        """
+        # Original O(n^3) implementation; kept for reference alongside the iterative BFS version
+        # in find_possible_ancestors.
         assert isinstance(descendants_set, (list, tuple, set))  # make sure a set is received and not a single element
         if en_nodes is None:
             en_nodes = self.nodes_set
-
+ 
         ancestors = set(descendants_set)
         for node in descendants_set:  # find all possible ancestors for node
             candidates = en_nodes - ancestors
