@@ -115,7 +115,15 @@ Additionally, a Bayesian score (BDeu) can be used for evaluating the posterior p
 
 ## Installation
 
-This code has been tested with Python 3.10+. We recommend installing and running it in a virtualenv.
+This code has been tested with Python 3.10+.
+
+Install directly with pip:
+
+```bash
+pip install git+https://github.com/IntelLabs/causality-lab.git
+```
+
+For local development, clone and install dependencies. We recommend installing and running in a virtualenv.
 
 ```bash
 sudo -E pip3 install virtualenv

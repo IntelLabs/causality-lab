@@ -1,3 +1,39 @@
 [build-system]
-requires = ["setuptools>=42"]
+requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "causality-lab"
+version = "0.1.0"
+description = "Research code of novel causal discovery algorithms developed at Intel Labs."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+authors = [{ name = "Intel Labs" }]
+keywords = ["AI", "ML", "causal discovery", "causality"]
+dependencies = [
+    "numpy",
+    "scipy",
+    "matplotlib",
+    "pillow",
+]
+classifiers = [
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+[project.urls]
+Homepage = "https://github.com/IntelLabs/causality-lab"
+
+[tool.setuptools.packages.find]
+include = [
+    "causal_discovery_algs*",
+    "causal_discovery_utils*",
+    "causal_reasoning*",
+    "experiment_utils*",
+    "graphical_models*",
+    "plot_utils*",
+]
